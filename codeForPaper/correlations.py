@@ -2,6 +2,8 @@ import torch
 from functools import cache
 from scipy.signal import gaussian
 from torch.nn import functional as F
+import networkx as nx
+import numpy as np
 
 @cache
 def get_smoothing_kernel(kernel_width):
@@ -31,3 +33,17 @@ def compute_2d_correlations(br, lag_window):
     corr_idx -= lag_window
 
     return corr.cpu().numpy(), corr_idx.cpu().numpy()
+
+def graph_from_correlations(corr, X):
+    THRESHOLD = np.quantile(corr[np.triu_indices_from(corr, 1)], X)
+    a = np.where(corr > THRESHOLD, corr - np.eye(corr.shape[0]), 0.0)
+    C = np.einsum('ij,ik,jk->i', a, a, a) / np.maximum(np.einsum('ij,ik->i', a, a), 1.0)
+    
+    # Constructing the graph
+    G = nx.Graph()
+    G.add_nodes_from(range(corr.shape[0]))
+    for i in range(corr.shape[0]):
+        for j in range(corr.shape[0]):
+            if i != j and corr[i, j] > THRESHOLD:
+                G.add_edge(i, j)
+    return G, C

@@ -30,3 +30,44 @@ def fast_hole_analysis(G, max_length):
         stack[0] = i
         rec(i, stack, 1, 1.0, 0.0, ans, max_length, G)
     return ans[1:]
+
+def connected_components_analysis(G):
+    edges = []
+    for i in range(G.shape[0]):
+        for j in range(i + 1, G.shape[0]):
+            edges.append((G[i, j], i, j))
+    edges.sort()
+    edges = edges[::-1]
+    connected_components_counts = [0] * (G.shape[0] + 1)
+    connected_components_counts[1] = G.shape[0]
+    p = list(range(G.shape[0]))
+    r = [0] * G.shape[0]
+    size = [1] * G.shape[0]
+    has_cycle = [False] * G.shape[0]
+    def get(i):
+        if p[i] == i:
+            return i
+        p[i] = get(p[i])
+        return p[i]
+    def unite(i, j):
+        i = get(i)
+        j = get(j)
+        if i == j:
+            has_cycle[i] = True
+            return
+        if r[i] < r[j]:
+            size[j] += size[i]
+            p[i] = j
+        else:
+            size[i] += size[j]
+            p[j] = i
+            if r[i] == r[j]:
+                r[i] += 1
+    for _, i, j in edges:
+        unite(i, j)
+        root = get(i)
+        if not has_cycle[root]:
+            connected_components_counts[size[root]] += 1
+    while connected_components_counts[-1] == 0:
+        connected_components_counts.pop()
+    return connected_components_counts
