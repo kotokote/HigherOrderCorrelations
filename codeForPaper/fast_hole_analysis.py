@@ -1,4 +1,4 @@
-from numba import njit
+from numba import njit, prange
 
 @njit
 def rec(i, stack, stack_len, birth, death, out, max_length, G):
@@ -25,8 +25,10 @@ def rec(i, stack, stack_len, birth, death, out, max_length, G):
 @njit(parallel=True)
 def fast_hole_analysis(G, max_length):
     ans = [(-1, 0.0, 0.0)]
-    stack = [0] * max_length
     for i in range(G.shape[0]):
+        if G.shape[0] > 400 and i % 10 == 0:
+            print(i, len(ans))
+        stack = [0] * max_length
         stack[0] = i
         rec(i, stack, 1, 1.0, 0.0, ans, max_length, G)
     return ans[1:]

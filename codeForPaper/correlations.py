@@ -19,8 +19,8 @@ def compute_2d_correlations(br, lag_window):
     inv_var = 1.0 / torch.maximum(var, torch.as_tensor(1e-8)).sqrt()
 
     corrs = []
-    SLICES = 20
     N = br.shape[0]
+    SLICES = min(100, N)
     for slice in range(SLICES):
         torch.cuda.empty_cache()
         br_slice = br[N * slice // SLICES:N * (slice + 1) // SLICES]
