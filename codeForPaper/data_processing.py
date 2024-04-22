@@ -16,21 +16,21 @@ ALL_FILES = [
     # "2950_spike_mat_or_rand", #26
     # "2953_spike_mat_or_rand", #Tal paper
     # "2957_spike_mat_or_rand",
-    # "5116_spike_mat_or_rand",
-    "M1S1_t_spk_mat_sorted",
-    "M1S2_t_spk_mat_sorted",
-    "M2S1_t_spk_mat_sorted",
-    "M2S2_t_spk_mat_sorted",
-    "M3S1_t_spk_mat_sorted",
-    "M3S2_t_spk_mat_sorted",
-    "O5_t_spk_mat_sorted",
-    "O6_t_spk_mat_sorted",
+    "5116_spike_mat_or_rand",
+    # "M1S1_t_spk_mat_sorted",
+    # "M1S2_t_spk_mat_sorted",
+    # "M2S1_t_spk_mat_sorted",
+    # "M2S2_t_spk_mat_sorted",
+    # "M3S1_t_spk_mat_sorted",
+    # "M3S2_t_spk_mat_sorted",
+    # "O5_t_spk_mat_sorted",
+    # "O6_t_spk_mat_sorted",
 ]
 
 def process(fn, lag_window, use_shuffle):
     out_fn = f"processed/{fn}_lag_window_{lag_window}{'_shuffle' if use_shuffle else ''}.pkl"
-    if Path(out_fn).exists():
-        return
+    # if Path(out_fn).exists():
+    #     return
     try:
         f = loadmat(f"{fn}.mat")
         ar = np.array(f['t_spk_mat']).T.astype(np.float32)
@@ -70,6 +70,10 @@ def process(fn, lag_window, use_shuffle):
     
     r = ripser(1.0 - corr, maxdim=3 if n <= 150 else 2, distance_matrix=True)
     print([len(x) for x in r["dgms"]])
+    for r_min, r_max in [(0.5, 0.7), (0.7, 0.9), (0.9, 1.0)]:
+        corr_narrow = np.where((corr >= r_min) & (corr < r_max), 0.0, 1.0)
+        r_narrow = ripser(corr_narrow, maxdim=3 if n <= 150 else 2, distance_matrix=True)
+        print(r_min, r_max, [len(x) for x in r_narrow["dgms"]])
     with open(out_fn, "wb") as f:
         pickle.dump({
             "all": {
