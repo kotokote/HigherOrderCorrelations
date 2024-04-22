@@ -8,7 +8,7 @@ from tqdm import tqdm
 from scipy.io import loadmat
 from correlations import fast_gaussian_filter, compute_2d_correlations, graph_from_correlations
 from shuffling import shuffle
-from fast_hole_analysis import fast_hole_analysis, connected_components_analysis
+from fast_hole_analysis import fast_hole_analysis, connected_components_analysis, connected_components_analysis_range
 from ripser import ripser
 from pathlib import Path
 
@@ -70,10 +70,17 @@ def process(fn, lag_window, use_shuffle):
     
     r = ripser(1.0 - corr, maxdim=3 if n <= 150 else 2, distance_matrix=True)
     print([len(x) for x in r["dgms"]])
+    range_analysis = {}
     for r_min, r_max in [(0.5, 0.7), (0.7, 0.9), (0.9, 1.0)]:
         corr_narrow = np.where((corr >= r_min) & (corr < r_max), 0.0, 1.0)
         r_narrow = ripser(corr_narrow, maxdim=3 if n <= 150 else 2, distance_matrix=True)
         print(r_min, r_max, [len(x) for x in r_narrow["dgms"]])
+        cc_counts = connected_components_analysis_range(corr, r_min, r_max)
+        print(r_min, r_max, cc_counts)
+        range_analysis[(r_min, r_max)] = {
+            "ripser": r_narrow,
+            "cc_counts": cc_counts,
+        }
     with open(out_fn, "wb") as f:
         pickle.dump({
             "all": {
@@ -84,6 +91,7 @@ def process(fn, lag_window, use_shuffle):
                 "ripser": r,
                 "holes": fh,
                 "cc_counts": cc_counts,
+                "range_analysis": range_analysis,
             },
             "slices": slices,
         }, f)
