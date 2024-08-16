@@ -34,6 +34,22 @@ def compute_2d_correlations(br, lag_window):
 
     return corr.cpu().numpy(), corr_idx.cpu().numpy()
 
+def compute_3d_correlations(br, corr_idx):
+    from scipy.signal import correlate
+    from tqdm import tqdm
+    import itertools
+    pairs = [[] for _ in range(br.shape[0])]
+    for i in range(br.shape[0]):
+        for j in range(br.shape[0]):
+            pairs[i].append(br[i] * np.roll(br[j], corr_idx[i, j]))
+
+    varp = np.einsum('ijt,ijt->ij', pairs, pairs)
+    # Three-way correlation calculation
+    corr3 = np.zeros((br.shape[0], br.shape[0], br.shape[0]))
+    for i, j in tqdm(list(itertools.product(range(br.shape[0]), range(br.shape[0])))):
+        for k in range(br.shape[0]):
+            corr3[i, j, k] = np.max(correlate(pairs[i][j], br[k])) / np.maximum(np.sqrt(varp[i, j] * var[k]), 1e-8)
+
 def graph_from_correlations(corr, X):
     THRESHOLD = np.quantile(corr[np.triu_indices_from(corr, 1)], X)
     a = np.where(corr > THRESHOLD, corr - np.eye(corr.shape[0]), 0.0)

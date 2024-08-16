@@ -6,25 +6,28 @@ import pickle
 from numba import njit, prange
 from tqdm import tqdm
 from scipy.io import loadmat
-from correlations import fast_gaussian_filter, compute_2d_correlations, graph_from_correlations
+from correlations import fast_gaussian_filter, compute_2d_correlations, compute_3d_correlations, graph_from_correlations
 from shuffling import shuffle
 from fast_hole_analysis import fast_hole_analysis, connected_components_analysis, connected_components_analysis_range
 from ripser import ripser
 from pathlib import Path
 
 ALL_FILES = [
-    # "2950_spike_mat_or_rand", #26
-    # "2953_spike_mat_or_rand", #Tal paper
+    "2950_spike_mat_or_rand", #26
+    "2953_spike_mat_or_rand", #Tal paper
     # "2957_spike_mat_or_rand",
-    "5116_spike_mat_or_rand",
+    # "5116_spike_mat_or_rand",
     # "M1S1_t_spk_mat_sorted",
     # "M1S2_t_spk_mat_sorted",
     # "M2S1_t_spk_mat_sorted",
     # "M2S2_t_spk_mat_sorted",
     # "M3S1_t_spk_mat_sorted",
     # "M3S2_t_spk_mat_sorted",
-    # "O5_t_spk_mat_sorted",
-    # "O6_t_spk_mat_sorted",
+    "O5_t_spk_mat_sorted",
+    "O6_t_spk_mat_sorted",
+    "UCSC_mouse_Pasca_23129",
+    "UCSC_mouse_Pasca_23149",
+    "UCSC_mouse_Pasca_23179",
 ]
 
 def process(fn, lag_window, use_shuffle):
@@ -57,6 +60,8 @@ def process(fn, lag_window, use_shuffle):
     
     br = fast_gaussian_filter(torch.tensor(ar).cuda(), 50.0)
     corr, corr_idx_data = compute_2d_correlations(br, lag_window)
+    # corr3 = compute_3d_correlations(br.cpu().numpy(), corr_idx_data)
+    # print("here", corr3.shape)
 
     G, C = graph_from_correlations(corr, 0.5)
 
