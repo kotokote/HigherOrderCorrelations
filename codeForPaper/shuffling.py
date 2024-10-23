@@ -16,6 +16,9 @@ def swap(ar, idxs):
 def shuffle(ar, n_iters=100000):
     ar = ar.copy()
     idxs = np.where(ar == 1.0)
+    if len(idxs[0]) == 0:
+        print("No edges to shuffle")
+        return ar
     iters = 0
     cnt_swap = 0
     for _ in range(n_iters):
